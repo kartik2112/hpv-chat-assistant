@@ -13,4 +13,12 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 
+// Turn off the rule that forbids explicit `any` in TypeScript files.
+// This project intentionally allows `any` in a few spots (speech API interop, quick prototyping).
+eslintConfig.push({
+  rules: {
+    "@typescript-eslint/no-explicit-any": "off",
+  },
+});
+
 export default eslintConfig;

@@ -301,7 +301,19 @@ const Composer: FC = () => {
 
 const ComposerAction: FC = () => {
   const [listening, setListening] = useState(false);
-  const recognitionRef = useRef<any | null>(null);
+  // Define a minimal local speech recognition interface to avoid depending on
+  // lib.dom types and to keep lint/type checks happy.
+  interface ISpeechRecognition {
+    lang: string;
+    interimResults: boolean;
+    maxAlternatives?: number;
+    start(): void;
+    stop(): void;
+    onresult?: (event: { results: any[] }) => void;
+    onend?: () => void;
+  }
+
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -311,19 +323,28 @@ const ComposerAction: FC = () => {
   }, []);
 
   const startListening = () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
+    // Narrowly type access to the global constructors without using `any`.
+    type SpeechRecognitionGlobal = {
+      SpeechRecognition?: { new (): ISpeechRecognition };
+      webkitSpeechRecognition?: { new (): ISpeechRecognition };
+    };
+
+    const globalObj = window as unknown as SpeechRecognitionGlobal;
+    const ctor = globalObj.SpeechRecognition ?? globalObj.webkitSpeechRecognition;
+    if (!ctor) {
       console.warn("SpeechRecognition not supported in this browser");
       return;
     }
 
-    const recog = new SpeechRecognition();
+    const recog = new ctor();
     recog.lang = "en-US";
     recog.interimResults = false;
     recog.maxAlternatives = 1;
 
-    recog.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
+    recog.onresult = (event) => {
+      // event.results typing is implementation dependent; access safely
+      const result = event.results?.[0]?.[0];
+      const text = result?.transcript ?? "";
       if (inputRef.current) {
         inputRef.current.value = text;
         // dispatch input event so composer primitive can pick up the change
