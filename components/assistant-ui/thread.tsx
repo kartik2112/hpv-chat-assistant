@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from "react";
 import {
   ThreadPrimitive,
   ComposerPrimitive,
@@ -18,6 +19,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   Square,
+  Mic,
 } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
@@ -112,60 +114,161 @@ const ThreadWelcome: FC = () => {
 };
 
 const ThreadWelcomeSuggestions: FC = () => {
+  const initialSuggestions = [
+    {
+      title: "What is HPV?",
+      label: "",
+      action: "What is HPV?",
+      defaultAnswer: "HPV (Human Papillomavirus) is a group of related viruses, some of which can cause warts or lead to certain cancers.",
+      followups: [
+        { title: "How common is HPV?", action: "How common is HPV?", defaultAnswer: "HPV is very common — most sexually active people will get it at some point in their lives." },
+        { title: "How is it passed from one person to another?", action: "How is it passed from one person to another?", defaultAnswer: "HPV is usually transmitted through intimate skin-to-skin contact, often during sexual activity." },
+        { title: "What are symptoms of HPV infection?", action: "What are symptoms of HPV infection?", defaultAnswer: "Many HPV infections have no symptoms; some cause warts, while high-risk types can lead to precancerous changes over time." },
+        { title: "Can HPV infections be treated?", action: "Can HPV infections be treated?", defaultAnswer: "There is no cure for the virus itself, but many HPV-related conditions (like warts or precancerous lesions) can be treated." },
+      ],
+    },
+    {
+      title: "How can I protect against HPV?",
+      label: ``,
+      action: `How can I protect against HPV?`,
+      defaultAnswer: "HPV infection can be reduced by vaccination, practicing safe sex, and regular health screenings.",
+      followups: [
+        { title: "Is the HPV vaccine safe?", action: "Is the HPV vaccine safe?", defaultAnswer: "Yes — large studies show the HPV vaccine is safe for recommended age groups." },
+        { title: "Is the HPV vaccine effective?", action: "Is the HPV vaccine effective?", defaultAnswer: "The vaccine is highly effective at preventing infection by the HPV types it targets, especially when given before exposure." },
+        { title: "When should people get the HPV vaccine?", action: "When should people get the HPV vaccine?", defaultAnswer: "It's recommended for preteens (ages 11–12) though catch-up vaccination is available for older individuals up to certain ages." },
+        { title: "What are the side effects of the HPV vaccine?", action: "What are the side effects of the HPV vaccine?", defaultAnswer: "Side effects are usually mild — soreness at the injection site, low-grade fever, or headache are common." },
+      ],
+    },
+    {
+      title: "Why should I be worried about HPV?",
+      label: ``,
+      action: `Why should I be worried about HPV?`,
+      defaultAnswer: "HPV is a common sexually transmitted infection that can lead to serious health issues, including certain cancers.",
+      followups: [
+        { title: "When can HPV infection cause cancer?", action: "When can HPV infection cause cancer?", defaultAnswer: "Persistent infection with high-risk HPV types over many years can lead to cellular changes and, rarely, cancer." },
+        { title: "How long does cervical cancer take to develop?", action: "How long does cervical cancer take to develop?", defaultAnswer: "It can take several years to many decades; regular screening detects precancerous changes early." },
+        { title: "Can I get the HPV vaccine if I've already had an infection or cancer?", action: "Can I get the HPV vaccine if I've already had an infection or cancer?", defaultAnswer: "You can still benefit from the vaccine even if you've had an HPV infection, but consult a clinician if you have a history of HPV-related cancer." },
+      ],
+    },
+    {
+      title: "Do I still need Pap smears if I have had the HPV vaccine?",
+      label: "",
+      action: "Do I still need Pap smears if I have had the HPV vaccine?",
+      defaultAnswer: "Yes, even if you have had the HPV vaccine, regular Pap smears are still recommended to screen for cervical cancer.",
+      followups: [
+        { title: "How do we screen/check for cervical cancer?", action: "How do we screen/check for cervical cancer?", defaultAnswer: "Cervical cancer screening typically uses Pap smears and/or HPV testing to find precancerous changes early." },
+        { title: "When should I be tested for HPV?", action: "When should I be tested for HPV?", defaultAnswer: "Follow national screening guidelines; often testing starts in young adulthood or as recommended by clinicians." },
+      ],
+    },
+  ];
+
+  const [selectedMain, setSelectedMain] = useState<number | null>(null);
+  const [selectedFollowup, setSelectedFollowup] = useState<number | null>(null);
+
   return (
     // aui-thread-welcome-suggestions
     <div className="grid w-full gap-2 sm:grid-cols-2">
-      {[
-        {
-          title: "What are the advantages",
-          label: "of using Assistant Cloud?",
-          action: "What are the advantages of using Assistant Cloud?",
-        },
-        {
-          title: "Write code to",
-          label: `demonstrate topological sorting`,
-          action: `Write code to demonstrate topological sorting`,
-        },
-        {
-          title: "Help me write an essay",
-          label: `about AI chat applications`,
-          action: `Help me write an essay about AI chat applications`,
-        },
-        {
-          title: "What is the weather",
-          label: "in San Francisco?",
-          action: "What is the weather in San Francisco?",
-        },
-      ].map((suggestedAction, index) => (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ delay: 0.05 * index }}
-          key={`suggested-action-${suggestedAction.title}-${index}`}
-          // aui-thread-welcome-suggestion-display
-          className="[&:nth-child(n+3)]:hidden sm:[&:nth-child(n+3)]:block"
-        >
-          <ThreadPrimitive.Suggestion
-            prompt={suggestedAction.action}
-            method="replace"
-            autoSend
-            asChild
+      {selectedMain === null ? (
+        initialSuggestions.map((suggestedAction, index) => (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ delay: 0.05 * index }}
+            key={`suggested-action-${suggestedAction.title}-${index}`}
+            // aui-thread-welcome-suggestion-display
+            className="[&:nth-child(n+3)]:hidden sm:[&:nth-child(n+3)]:block"
           >
             <Button
               variant="ghost"
               // aui-thread-welcome-suggestion
               className="dark:hover:bg-accent/60 h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-xl border px-4 py-3.5 text-left text-sm sm:flex-col"
-              aria-label={suggestedAction.action}
+                aria-label={suggestedAction.action}
+                onClick={() => {
+                  setSelectedMain(index);
+                  setSelectedFollowup(null);
+                }}
             >
               {/* aui-thread-welcome-suggestion-text-1 */}
               <span className="font-medium">{suggestedAction.title}</span>
               {/* aui-thread-welcome-suggestion-text-2 */}
               <p className="text-muted-foreground">{suggestedAction.label}</p>
             </Button>
-          </ThreadPrimitive.Suggestion>
-        </motion.div>
-      ))}
+          </motion.div>
+        ))
+      ) : (
+        <>
+          {/* Default answer display */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ delay: 0.1 }}
+            className="sm:col-span-2 col-span-2 mb-2"
+          >
+            <div className="bg-muted border px-4 py-3 rounded-xl text-base text-foreground">
+              {initialSuggestions[selectedMain!].defaultAnswer}
+            </div>
+          </motion.div>
+          {/* If a followup is focused, show that followup's default answer and actions */}
+          {selectedFollowup !== null ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ delay: 0.1 }}
+              className="sm:col-span-2 col-span-2 mb-2"
+            >
+              <div className="bg-muted border px-4 py-3 rounded-xl text-base text-foreground">
+                <div className="font-medium mb-2">{initialSuggestions[selectedMain!].followups[selectedFollowup].title}</div>
+                <div className="text-muted-foreground mb-3">{initialSuggestions[selectedMain!].followups[selectedFollowup].defaultAnswer}</div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedFollowup(null)}>Back</Button>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            /* Follow-up questions with preview & Ask */
+            initialSuggestions[selectedMain!].followups.map((followup, idx) => (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ delay: 0.05 * idx }}
+              key={`followup-action-${followup.title}-${idx}`}
+              // aui-thread-welcome-followup-display
+              className="sm:col-span-2"
+            >
+              <Button
+                variant="ghost"
+                asChild
+                aria-label={`View followup: ${followup.title}`}
+                onClick={() => setSelectedFollowup(idx)}
+              >
+                <div className="rounded-xl border px-4 py-3 mb-2 w-full text-left flex items-start">
+                  <div className="font-medium text-left">{followup.title}</div>
+                </div>
+              </Button>
+            </motion.div>
+            ))
+          )}
+          {/* Back button */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ delay: 0.2 }}
+            className="sm:col-span-2 flex justify-center mt-2"
+          >
+            <Button variant="outline" size="sm" onClick={() => {
+              if (selectedFollowup !== null) setSelectedFollowup(null);
+              else setSelectedMain(null);
+            }}>
+              Back
+            </Button>
+          </motion.div>
+        </>
+      )}
     </div>
   );
 };
@@ -197,6 +300,54 @@ const Composer: FC = () => {
 };
 
 const ComposerAction: FC = () => {
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    // locate the composer input element in the DOM once
+    const el = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement | null;
+    if (el) inputRef.current = el;
+  }, []);
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("SpeechRecognition not supported in this browser");
+      return;
+    }
+
+    const recog = new SpeechRecognition();
+    recog.lang = "en-US";
+    recog.interimResults = false;
+    recog.maxAlternatives = 1;
+
+    recog.onresult = (event: any) => {
+      const text = event.results[0][0].transcript;
+      if (inputRef.current) {
+        inputRef.current.value = text;
+        // dispatch input event so composer primitive can pick up the change
+        inputRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    };
+
+    recog.onend = () => {
+      setListening(false);
+    };
+
+    recognitionRef.current = recog;
+    recog.start();
+    setListening(true);
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setListening(false);
+  };
+
   return (
     // aui-composer-action-wrapper
     <div className="bg-muted border-border dark:border-muted-foreground/15 relative flex items-center justify-between rounded-b-2xl border-x border-b p-2">
@@ -210,6 +361,19 @@ const ComposerAction: FC = () => {
         }}
       >
         <PlusIcon />
+      </TooltipIconButton>
+
+      {/* Microphone button for voice input */}
+      <TooltipIconButton
+        tooltip={listening ? "Stop recording" : "Record voice"}
+        variant={listening ? "default" : "ghost"}
+        className="hover:bg-foreground/15 dark:hover:bg-background/50 scale-115 p-3.5"
+        onClick={() => {
+          if (listening) stopListening();
+          else startListening();
+        }}
+      >
+        <Mic />
       </TooltipIconButton>
 
       <ThreadPrimitive.If running={false}>
