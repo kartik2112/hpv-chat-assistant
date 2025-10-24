@@ -1,6 +1,7 @@
 {
   "name": "hpv-chat-assistant",
   "version": "0.1.0",
+  "homepage": "https://kartik2112.github.io/hpv-chat-assistant",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
