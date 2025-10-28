@@ -94,7 +94,7 @@ const ThreadWelcome: FC = () => {
               // aui-thread-welcome-message-motion-1
               className="text-2xl font-semibold"
             >
-              Hello there!
+              Hello!
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -104,7 +104,7 @@ const ThreadWelcome: FC = () => {
               // aui-thread-welcome-message-motion-2
               className="text-muted-foreground/65 text-2xl"
             >
-              How can I help you today?
+              I can answer any questions you have about HPV.
             </motion.div>
           </div>
         </div>
@@ -151,9 +151,9 @@ const ThreadWelcomeSuggestions: FC = () => {
       ],
     },
     {
-      title: "Do I still need Pap smears if I have had the HPV vaccine?",
+      title: "Do I still need Pap smears if I had the HPV vaccine?",
       label: "",
-      action: "Do I still need Pap smears if I have had the HPV vaccine?",
+      action: "Do I still need Pap smears if I had the HPV vaccine?",
       defaultAnswer: "Yes, even if you have had the HPV vaccine, regular Pap smears are still recommended to screen for cervical cancer.",
       followups: [
         { title: "How do we screen/check for cervical cancer?", action: "How do we screen/check for cervical cancer?", defaultAnswer: "Cervical cancer screening typically uses Pap smears and/or HPV testing to find precancerous changes early." },
@@ -222,9 +222,9 @@ const ThreadWelcomeSuggestions: FC = () => {
               <div className="bg-muted border px-4 py-3 rounded-xl text-base text-foreground">
                 <div className="font-medium mb-2">{initialSuggestions[selectedMain!].followups[selectedFollowup].title}</div>
                 <div className="text-muted-foreground mb-3">{initialSuggestions[selectedMain!].followups[selectedFollowup].defaultAnswer}</div>
-                <div className="flex gap-2 justify-end">
+                {/* <div className="flex gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => setSelectedFollowup(null)}>Back</Button>
-                </div>
+                </div> */}
               </div>
             </motion.div>
           ) : (
@@ -237,7 +237,7 @@ const ThreadWelcomeSuggestions: FC = () => {
               transition={{ delay: 0.05 * idx }}
               key={`followup-action-${followup.title}-${idx}`}
               // aui-thread-welcome-followup-display
-              className="sm:col-span-2"
+              className="sm:col-span-1  flex justify-center"
             >
               <Button
                 variant="ghost"
@@ -347,8 +347,27 @@ const ComposerAction: FC = () => {
       const text = result?.transcript ?? "";
       if (inputRef.current) {
         inputRef.current.value = text;
-        // dispatch input event so composer primitive can pick up the change
-        inputRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+        // focus the textarea so the composer registers user interaction
+        try {
+          inputRef.current.focus();
+        } catch (e) {
+          /* ignore */
+        }
+
+        // dispatch an InputEvent so frameworks (React) and the composer primitive
+        // observe the change and enable the Send button.
+        let inputEvent;
+        try {
+          inputEvent = new InputEvent('input', { bubbles: true, cancelable: true });
+        } catch (err) {
+          // InputEvent may not be available in some environments (or during SSR checks).
+          inputEvent = new Event('input', { bubbles: true, cancelable: true });
+        }
+
+        inputRef.current.dispatchEvent(inputEvent);
+
+        // also dispatch a change event as a fallback for any listeners
+        inputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
       }
     };
 
