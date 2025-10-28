@@ -28,7 +28,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MarkdownText } from "./markdown-text";
-import { ToolFallback } from "./tool-fallback";
+// import { ToolFallback } from "./tool-fallback";
 
 export const Thread: FC = () => {
   return (
@@ -553,7 +553,7 @@ const AssistantMessage: FC = () => {
           <MessagePrimitive.Content
             components={{
               Text: MarkdownText,
-              tools: { Fallback: ToolFallback },
+              // tools: { Fallback: ToolFallback },
             }}
           />
           <MessageError />
