@@ -6,6 +6,7 @@ import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
   ErrorPrimitive,
+  useAssistantApi
 } from "@assistant-ui/react";
 import type { FC } from "react";
 import {
@@ -104,7 +105,8 @@ const ThreadWelcome: FC = () => {
               // aui-thread-welcome-message-motion-2
               className="text-muted-foreground/65 text-2xl"
             >
-              I can answer any questions you have about HPV.
+              I can answer any questions you have about HPV.<br/>
+              Puedo responder cualquier pregunta que tengas sobre el VPH.
             </motion.div>
           </div>
         </div>
@@ -315,11 +317,25 @@ const ComposerAction: FC = () => {
 
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const buttonEl = useRef<HTMLButtonElement | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const countdownRef = useRef<number | null>(null);
+  const api = useAssistantApi();
 
   useEffect(() => {
     // locate the composer input element in the DOM once
     const el = document.querySelector('textarea[aria-label="Message input"]') as HTMLTextAreaElement | null;
     if (el) inputRef.current = el;
+
+    // locate the send message button element in the DOM once
+    buttonEl.current = document.querySelector('button[aria-label="Send message"]') as HTMLButtonElement | null;
+
+    return () => {
+      if (countdownRef.current) {
+        window.clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    };
   }, []);
 
   const startListening = () => {
@@ -347,9 +363,11 @@ const ComposerAction: FC = () => {
       const text = result?.transcript ?? "";
       if (inputRef.current) {
         inputRef.current.value = text;
+        inputRef.current.innerText = text;
         // focus the textarea so the composer registers user interaction
         try {
           inputRef.current.focus();
+          if (buttonEl.current) buttonEl.current.disabled = false;
         } catch (e) {
           /* ignore */
         }
@@ -373,6 +391,46 @@ const ComposerAction: FC = () => {
 
     recog.onend = () => {
       setListening(false);
+
+      // When recording ends, show a short countdown before auto-send so user can cancel
+      try {
+        const text = inputRef.current?.value?.trim() ?? "";
+        if (text && buttonEl.current) {
+          setCountdown(3);
+          // ensure any previous timer is cleared
+          if (countdownRef.current) {
+            window.clearInterval(countdownRef.current);
+            countdownRef.current = null;
+          }
+
+          countdownRef.current = window.setInterval(() => {
+            setCountdown((prev) => {
+              if (prev === null) return null;
+              if (prev <= 1) {
+                // final tick: send and clear
+                try {
+                  if (buttonEl.current) {
+                    console.log("Auto-sending message:", text);
+                    api.composer().setText(text);
+                    api.composer().send();
+                    // buttonEl.current.click();
+                  }
+                } catch (e) {
+                  console.warn("Auto-send click failed:", e);
+                }
+                if (countdownRef.current) {
+                  window.clearInterval(countdownRef.current);
+                  countdownRef.current = null;
+                }
+                return null;
+              }
+              return prev - 1;
+            });
+          }, 1000) as unknown as number;
+        }
+      } catch (err) {
+        console.warn("Auto-send failed:", err);
+      }
     };
 
     recognitionRef.current = recog;
@@ -391,7 +449,7 @@ const ComposerAction: FC = () => {
   return (
     // aui-composer-action-wrapper
     <div className="bg-muted border-border dark:border-muted-foreground/15 relative flex items-center justify-between rounded-b-2xl border-x border-b p-2">
-      <TooltipIconButton
+      {/* <TooltipIconButton
         tooltip="Attach file"
         variant="ghost"
         // aui-composer-attachment-button
@@ -401,7 +459,7 @@ const ComposerAction: FC = () => {
         }}
       >
         <PlusIcon />
-      </TooltipIconButton>
+      </TooltipIconButton> */}
 
       {/* Microphone button for voice input */}
       <TooltipIconButton
@@ -409,12 +467,26 @@ const ComposerAction: FC = () => {
         variant={listening ? "default" : "ghost"}
         className="hover:bg-foreground/15 dark:hover:bg-background/50 scale-115 p-3.5"
         onClick={() => {
-          if (listening) stopListening();
-          else startListening();
+          if (listening) {
+            // stopping should cancel any pending countdown
+            if (countdownRef.current) {
+              window.clearInterval(countdownRef.current);
+              countdownRef.current = null;
+            }
+            setCountdown(null);
+            stopListening();
+          } else startListening();
         }}
       >
         <Mic />
       </TooltipIconButton>
+
+      {/* Countdown badge shown after recording stops and before auto-send */}
+      {countdown !== null && (
+        <div className="ml-2 inline-flex items-center justify-center rounded-full bg-accent px-2 py-1 text-sm font-semibold text-accent-foreground">
+          {countdown}
+        </div>
+      )}
 
       <ThreadPrimitive.If running={false}>
         <ComposerPrimitive.Send asChild>
