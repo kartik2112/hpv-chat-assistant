@@ -490,8 +490,8 @@ const ComposerAction: FC = () => {
         if (text && buttonEl.current) {
           add_messages_to_thread(text);
           // api.composer().reset();
-          inputRef.current.value = "";
-          inputRef.current.innerText = "";
+          // inputRef.current.value = "";
+          // inputRef.current.innerText = "";
         }
       } catch (err) {
         console.warn("Auto-send failed:", err);
