@@ -1,6 +1,6 @@
 "use client";
 
-import { AssistantRuntimeProvider } from "@assistant-ui/react";
+import { AssistantRuntimeProvider, WebSpeechSynthesisAdapter } from "@assistant-ui/react";
 import { useChatRuntime } from "@assistant-ui/react-ai-sdk";
 import { Thread } from "@/components/assistant-ui/thread";
 import {
@@ -20,7 +20,13 @@ import {
 } from "@/components/ui/breadcrumb";
 
 export const Assistant = () => {
-  const runtime = useChatRuntime();
+  const runtime = useChatRuntime(
+    {
+      adapters: {
+        speech: new WebSpeechSynthesisAdapter(),
+      }
+    } as any
+  );
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>

@@ -6,7 +6,8 @@ import {
   ActionBarPrimitive,
   BranchPickerPrimitive,
   ErrorPrimitive,
-  useAssistantApi
+  useAssistantApi,
+  useAssistantInstructions
 } from "@assistant-ui/react";
 import type { FC } from "react";
 import {
@@ -21,6 +22,8 @@ import {
   ChevronRightIcon,
   Square,
   Mic,
+  SpeakerIcon,
+  Speaker,
 } from "lucide-react";
 
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
@@ -171,105 +174,106 @@ const ThreadWelcomeSuggestions: FC = () => {
     // aui-thread-welcome-suggestions
     <div className="grid w-full gap-2 sm:grid-cols-2">
       {selectedMain === null ? (
-        initialSuggestions.map((suggestedAction, index) => (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ delay: 0.05 * index }}
-            key={`suggested-action-${suggestedAction.title}-${index}`}
-            // aui-thread-welcome-suggestion-display
-            className="[&:nth-child(n+3)]:hidden sm:[&:nth-child(n+3)]:block"
-          >
-            <Button
-              variant="ghost"
-              // aui-thread-welcome-suggestion
-              className="dark:hover:bg-accent/60 h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-xl border px-4 py-3.5 text-left text-sm sm:flex-col"
-                aria-label={suggestedAction.action}
-                onClick={() => {
-                  setSelectedMain(index);
-                  setSelectedFollowup(null);
-                }}
-            >
-              {/* aui-thread-welcome-suggestion-text-1 */}
-              <span className="font-medium">{suggestedAction.title}</span>
-              {/* aui-thread-welcome-suggestion-text-2 */}
-              <p className="text-muted-foreground">{suggestedAction.label}</p>
-            </Button>
-          </motion.div>
-        ))
+      initialSuggestions.map((suggestedAction, index) => (
+        <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        transition={{ delay: 0.05 * index }}
+        key={`suggested-action-${suggestedAction.title}-${index}`}
+        // aui-thread-welcome-suggestion-display
+        className="[&:nth-child(n+3)]:hidden sm:[&:nth-child(n+3)]:block"
+        >
+        <Button
+          variant="ghost"
+          // aui-thread-welcome-suggestion
+          className="dark:hover:bg-accent/60 h-auto w-full flex-1 flex-wrap items-start justify-start gap-1 rounded-xl border px-4 py-3.5 text-left text-sm sm:flex-col"
+          aria-label={suggestedAction.action}
+          onClick={() => {
+            setSelectedMain(index);
+            setSelectedFollowup(null);
+          }}
+        >
+          {/* aui-thread-welcome-suggestion-text-1 */}
+          <span className="font-medium">{suggestedAction.title}</span>
+          {/* aui-thread-welcome-suggestion-text-2 */}
+          <p className="text-muted-foreground">{suggestedAction.label}</p>
+        </Button>
+        </motion.div>
+      ))
       ) : (
-        <>
-          {/* Default answer display */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ delay: 0.1 }}
-            className="sm:col-span-2 col-span-2 mb-2"
+      <>
+        {/* Default answer display (now includes the main question/title) */}
+        <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        transition={{ delay: 0.1 }}
+        className="sm:col-span-2 col-span-2 mb-2"
+        >
+        <div className="bg-muted border px-4 py-3 rounded-xl text-base text-foreground">
+          <div className="font-medium mb-2">{initialSuggestions[selectedMain!].title}</div>
+          <div>{initialSuggestions[selectedMain!].defaultAnswer}</div>
+        </div>
+        </motion.div>
+        {/* If a followup is focused, show that followup's default answer and actions */}
+        {selectedFollowup !== null ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ delay: 0.1 }}
+          className="sm:col-span-2 col-span-2 mb-2"
+        >
+          <div className="bg-muted border px-4 py-3 rounded-xl text-base text-foreground">
+          <div className="font-medium mb-2">{initialSuggestions[selectedMain!].followups[selectedFollowup].title}</div>
+          <div className="text-muted-foreground mb-3">{initialSuggestions[selectedMain!].followups[selectedFollowup].defaultAnswer}</div>
+          {/* <div className="flex gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={() => setSelectedFollowup(null)}>Back</Button>
+          </div> */}
+          </div>
+        </motion.div>
+        ) : (
+        /* Follow-up questions with preview & Ask */
+        initialSuggestions[selectedMain!].followups.map((followup, idx) => (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ delay: 0.05 * idx }}
+          key={`followup-action-${followup.title}-${idx}`}
+          // aui-thread-welcome-followup-display
+          className="sm:col-span-1  flex justify-center"
+        >
+          <Button
+          variant="ghost"
+          asChild
+          aria-label={`View followup: ${followup.title}`}
+          onClick={() => setSelectedFollowup(idx)}
           >
-            <div className="bg-muted border px-4 py-3 rounded-xl text-base text-foreground">
-              {initialSuggestions[selectedMain!].defaultAnswer}
-            </div>
-          </motion.div>
-          {/* If a followup is focused, show that followup's default answer and actions */}
-          {selectedFollowup !== null ? (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ delay: 0.1 }}
-              className="sm:col-span-2 col-span-2 mb-2"
-            >
-              <div className="bg-muted border px-4 py-3 rounded-xl text-base text-foreground">
-                <div className="font-medium mb-2">{initialSuggestions[selectedMain!].followups[selectedFollowup].title}</div>
-                <div className="text-muted-foreground mb-3">{initialSuggestions[selectedMain!].followups[selectedFollowup].defaultAnswer}</div>
-                {/* <div className="flex gap-2 justify-end">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedFollowup(null)}>Back</Button>
-                </div> */}
-              </div>
-            </motion.div>
-          ) : (
-            /* Follow-up questions with preview & Ask */
-            initialSuggestions[selectedMain!].followups.map((followup, idx) => (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: 0.05 * idx }}
-              key={`followup-action-${followup.title}-${idx}`}
-              // aui-thread-welcome-followup-display
-              className="sm:col-span-1  flex justify-center"
-            >
-              <Button
-                variant="ghost"
-                asChild
-                aria-label={`View followup: ${followup.title}`}
-                onClick={() => setSelectedFollowup(idx)}
-              >
-                <div className="rounded-xl border px-4 py-3 mb-2 w-full text-left flex items-start">
-                  <div className="font-medium text-left">{followup.title}</div>
-                </div>
-              </Button>
-            </motion.div>
-            ))
-          )}
-          {/* Back button */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ delay: 0.2 }}
-            className="sm:col-span-2 flex justify-center mt-2"
-          >
-            <Button variant="outline" size="sm" onClick={() => {
-              if (selectedFollowup !== null) setSelectedFollowup(null);
-              else setSelectedMain(null);
-            }}>
-              Back
-            </Button>
-          </motion.div>
-        </>
+          <div className="rounded-xl border px-4 py-3 mb-2 w-full text-left flex items-start">
+            <div className="font-medium text-left">{followup.title}</div>
+          </div>
+          </Button>
+        </motion.div>
+        ))
+        )}
+        {/* Back button */}
+        <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 10 }}
+        transition={{ delay: 0.2 }}
+        className="sm:col-span-2 flex justify-center mt-2"
+        >
+        <Button variant="outline" size="sm" onClick={() => {
+          if (selectedFollowup !== null) setSelectedFollowup(null);
+          else setSelectedMain(null);
+        }}>
+          Back
+        </Button>
+        </motion.div>
+      </>
       )}
     </div>
   );
@@ -321,6 +325,8 @@ const ComposerAction: FC = () => {
   const [countdown, setCountdown] = useState<number | null>(null);
   const countdownRef = useRef<number | null>(null);
   const api = useAssistantApi();
+  const SYSTEM_MESSAGE = "You are a helpful medical assistant specializing in HPV-related information. Provide accurate and concise answers based on the latest medical guidelines and research. Please answer the questions as you would explain to a five-year old. Avoid using complex medical jargon unless absolutely necessary, and always aim to educate in a clear and friendly manner. Don't make the answers sound scary or verbose. At the same time, attempt to stick to an answer that's very short. If you don't know the answer, simply say you don't know. If the question is not related to the HPV, politely decline to answer.";
+  useAssistantInstructions(SYSTEM_MESSAGE);
 
   useEffect(() => {
     // locate the composer input element in the DOM once
@@ -357,76 +363,135 @@ const ComposerAction: FC = () => {
     recog.interimResults = false;
     recog.maxAlternatives = 1;
 
-    recog.onresult = (event) => {
-      // event.results typing is implementation dependent; access safely
-      const result = event.results?.[0]?.[0];
-      const text = result?.transcript ?? "";
-      if (inputRef.current) {
-        inputRef.current.value = text;
-        inputRef.current.innerText = text;
-        // focus the textarea so the composer registers user interaction
-        try {
-          inputRef.current.focus();
-          if (buttonEl.current) buttonEl.current.disabled = false;
-        } catch (e) {
-          /* ignore */
-        }
+    // recog.onresult = (event) => {
+    //   // event.results typing is implementation dependent; access safely
+    //   const result = event.results?.[0]?.[0];
+    //   const text = result?.transcript ?? "";
+    //   if (inputRef.current) {
+    //     inputRef.current.value = text;
+    //     inputRef.current.innerText = text;
+    //     // focus the textarea so the composer registers user interaction
+    //     try {
+    //       inputRef.current.focus();
+    //       if (buttonEl.current) buttonEl.current.disabled = false;
+    //     } catch (e) {
+    //       /* ignore */
+    //     }
 
-        // dispatch an InputEvent so frameworks (React) and the composer primitive
-        // observe the change and enable the Send button.
-        let inputEvent;
-        try {
-          inputEvent = new InputEvent('input', { bubbles: true, cancelable: true });
-        } catch (err) {
-          // InputEvent may not be available in some environments (or during SSR checks).
-          inputEvent = new Event('input', { bubbles: true, cancelable: true });
-        }
+    //     // dispatch an InputEvent so frameworks (React) and the composer primitive
+    //     // observe the change and enable the Send button.
+    //     let inputEvent;
+    //     try {
+    //       inputEvent = new InputEvent('input', { bubbles: true, cancelable: true });
+    //     } catch (err) {
+    //       // InputEvent may not be available in some environments (or during SSR checks).
+    //       inputEvent = new Event('input', { bubbles: true, cancelable: true });
+    //     }
 
-        inputRef.current.dispatchEvent(inputEvent);
+    //     inputRef.current.dispatchEvent(inputEvent);
 
-        // also dispatch a change event as a fallback for any listeners
-        inputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
-      }
+    //     // also dispatch a change event as a fallback for any listeners
+    //     inputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+    //   }
+    // };
+
+    const add_messages_to_thread = (text: string) => {
+      const api_thread_instance = api.thread();
+      try {
+              // Try to extract the visible suggestion / followup text from the DOM.
+              // ThreadWelcomeSuggestions renders the selected main answer inside a
+              // div with "bg-muted" and followup (when selected) contains a
+              // ".font-medium" (title) and ".text-muted-foreground" (answer).
+                const bgMutedEls = Array.from(document.querySelectorAll('div.bg-muted'));
+                let mainQuestion: string | null = null;
+                let mainAnswer: string | null = null;
+                let followupTitle: string | null = null;
+                let followupAnswer: string | null = null;
+
+                if (bgMutedEls.length > 0) {
+                // Use the first visible bg-muted block as the main suggestion answer preview
+                const first = bgMutedEls[0] as HTMLElement;
+
+                // Try to extract a main title if present (rendered with .font-medium)
+                const mainTitleEl = first.querySelector('.font-medium');
+                if (mainTitleEl?.textContent) {
+                  mainQuestion = mainTitleEl.textContent.trim();
+                  // Remove the title from the innerText to get a cleaner main answer preview
+                  const raw = first.innerText || '';
+                  mainAnswer = raw.replace(mainTitleEl.textContent, '').trim() || null;
+                } else {
+                  // fallback: use the whole block text as the answer
+                  mainAnswer = first.innerText?.trim() ?? null;
+                }
+
+                // Prefer an element that contains a followup answer (.text-muted-foreground)
+                const followupEl = bgMutedEls.find((el) => el.querySelector('.text-muted-foreground'));
+                if (followupEl) {
+                  followupTitle = (followupEl.querySelector('.font-medium')?.textContent || '').trim() || null;
+                  followupAnswer = (followupEl.querySelector('.text-muted-foreground')?.textContent || '').trim() || null;
+                }
+                }
+
+                console.log('Selected main question & answer:', mainQuestion ?? '(no title)', '-', mainAnswer);
+                if (followupTitle || followupAnswer) {
+                console.log('Selected followup:', followupTitle, followupAnswer);
+                }
+
+              
+              api.thread().append({
+                role: "user",
+                content: [{ type: "text", text:  mainQuestion || "Question about HPV" }],
+              });
+
+              
+              api_thread_instance.append({
+                role: "assistant",
+                content: [{ type: "text", text:  mainAnswer || "Answer about HPV" }],
+              });
+
+              if (followupTitle || followupAnswer) {
+                api_thread_instance.append({
+                  role: "user",
+                  content: [{ type: "text", text:  followupTitle || "Question about HPV" }],
+                });
+
+                api_thread_instance.append({
+                  role: "assistant",
+                  content: [{ type: "text", text:  followupAnswer || "Answer about HPV" }],
+                });
+              }
+
+
+              // Always set the composer input to the recognized transcript
+              api_thread_instance.composer.setText(text);
+              console.log("Auto-sending message:", text);
+              // buttonEl.current.click();
+              api_thread_instance.composer.send();
+
+              
+            } catch (err) {
+              console.warn('Failed to read selected suggestion/followup from DOM or add to thread:', err);
+              // fallback: keep just the transcript in the composer
+              api_thread_instance.composer.setText(text);
+              console.log("Auto-sending message:", text);
+              // buttonEl.current.click();
+              api_thread_instance.composer.send();
+            }
     };
 
-    recog.onend = () => {
-      setListening(false);
+    recog.onresult = (event) => {
+
+      
 
       // When recording ends, show a short countdown before auto-send so user can cancel
       try {
-        const text = inputRef.current?.value?.trim() ?? "";
+        const result = event.results?.[0]?.[0];
+        const text = result?.transcript ?? "";
         if (text && buttonEl.current) {
-          setCountdown(3);
-          // ensure any previous timer is cleared
-          if (countdownRef.current) {
-            window.clearInterval(countdownRef.current);
-            countdownRef.current = null;
-          }
-
-          countdownRef.current = window.setInterval(() => {
-            setCountdown((prev) => {
-              if (prev === null) return null;
-              if (prev <= 1) {
-                // final tick: send and clear
-                try {
-                  if (buttonEl.current) {
-                    console.log("Auto-sending message:", text);
-                    api.composer().setText(text);
-                    api.composer().send();
-                    // buttonEl.current.click();
-                  }
-                } catch (e) {
-                  console.warn("Auto-send click failed:", e);
-                }
-                if (countdownRef.current) {
-                  window.clearInterval(countdownRef.current);
-                  countdownRef.current = null;
-                }
-                return null;
-              }
-              return prev - 1;
-            });
-          }, 1000) as unknown as number;
+          add_messages_to_thread(text);
+          // api.composer().reset();
+          inputRef.current.value = "";
+          inputRef.current.innerText = "";
         }
       } catch (err) {
         console.warn("Auto-send failed:", err);
@@ -577,7 +642,7 @@ const AssistantActionBar: FC = () => {
       // aui-assistant-action-bar-root
       className="text-muted-foreground data-floating:bg-background col-start-3 row-start-2 mt-3 ml-3 flex gap-1 data-floating:absolute data-floating:mt-2 data-floating:rounded-md data-floating:border data-floating:p-1 data-floating:shadow-sm"
     >
-      <ActionBarPrimitive.Copy asChild>
+      {/* <ActionBarPrimitive.Copy asChild>
         <TooltipIconButton tooltip="Copy">
           <MessagePrimitive.If copied>
             <CheckIcon />
@@ -586,12 +651,17 @@ const AssistantActionBar: FC = () => {
             <CopyIcon />
           </MessagePrimitive.If>
         </TooltipIconButton>
-      </ActionBarPrimitive.Copy>
-      <ActionBarPrimitive.Reload asChild>
-        <TooltipIconButton tooltip="Refresh">
-          <RefreshCwIcon />
+      </ActionBarPrimitive.Copy> */}
+      <ActionBarPrimitive.Speak asChild>
+        <TooltipIconButton tooltip="Start speaking">
+          <SpeakerIcon />
         </TooltipIconButton>
-      </ActionBarPrimitive.Reload>
+      </ActionBarPrimitive.Speak>
+      <ActionBarPrimitive.StopSpeaking asChild>
+        <TooltipIconButton tooltip="Stop speaking">
+          <Speaker />
+        </TooltipIconButton>
+      </ActionBarPrimitive.StopSpeaking>
     </ActionBarPrimitive.Root>
   );
 };
